@@ -20,11 +20,17 @@ SINCE=$(jq -r '.timestamp' "$STATE" 2>/dev/null || echo "1970-01-01T00:00:00Z")
 
 read -r TOTAL <<<"$(curl -s -H "Authorization: Bearer $WORK_PAT" \
   -H "Content-Type: application/json" \
-  -d @- https://api.github.com/graphql <<EOF | jq -r '.data.user.contributionsCollection.totalCommitContributions'
+  -d @- https://api.github.com/graphql <<EOF | jq -r '.data.user.contributionsCollection.totalCommitContributions // 0'
 { "query": "query(\$login:String!,\$from:DateTime!,\$to:DateTime!){ user(login:\$login){ contributionsCollection(from:\$from,to:\$to){ totalCommitContributions }}}",
   "variables": { "login": "$WORK_LOGIN", "from": "$SINCE", "to": "$NOW" } }
 EOF
 )"
+
+# Ensure TOTAL is a valid integer
+if ! [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
+  echo "Failed to fetch total commit contributions from GitHub API."
+  exit 1
+fi
 
 DELTA=$(( TOTAL - LAST_TOTAL ))
 [[ $DELTA -le 0 ]] && { echo "Nothing new."; exit 0; }
