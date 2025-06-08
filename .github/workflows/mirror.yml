@@ -8,8 +8,8 @@ on:
 
 env:
   WORK_LOGIN: "rodo_codify"   # work account handle
-  WORK_REPO: "org-or-user/work-repo"   # <─ full path to work repo
-  AUTHOR_NAME: "Rodo Nguyen"
+  WORK_REPO: "codifyptyltd/codify-systems"   # <─ full path to work repo
+  AUTHOR_NAME: "Rodo"
   AUTHOR_EMAIL: "rodonguyendd@gmail.com"      # <─ email listed on your personal profile
 
 jobs:
