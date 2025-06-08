@@ -1,0 +1,32 @@
+name: mirror‐work‐commits
+
+on:
+  schedule:
+    # UTC. Adjust as you wish. Runs daily at 02:15 AEST ≈ 16:15 UTC.
+    - cron:  '15 16 * * *'
+  workflow_dispatch:   # allows manual run
+
+env:
+  WORK_LOGIN: "rodo_codify"   # work account handle
+  WORK_REPO: "org-or-user/work-repo"   # <─ full path to work repo
+  AUTHOR_NAME: "Rodo Nguyen"
+  AUTHOR_EMAIL: "rodonguyendd@gmail.com"      # <─ email listed on your personal profile
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install deps
+      run: |
+        sudo apt-get update -yq
+        sudo apt-get install -y jq
+
+    - name: Run mirror script
+      env:
+        WORK_PAT: ${{ secrets.WORK_PAT }}
+        PERSONAL_PAT: ${{ secrets.PERSONAL_PAT || github.token }}
+      run: |
+        bash .github/scripts/mirror.sh
