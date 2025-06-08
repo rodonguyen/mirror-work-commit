@@ -32,6 +32,8 @@ if ! [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
+echo "Commit count: $TOTAL"
+
 DELTA=$(( TOTAL - LAST_TOTAL ))
 [[ $DELTA -le 0 ]] && { echo "Nothing new."; exit 0; }
 
