@@ -3,14 +3,13 @@ name: mirror‐work‐commits
 on:
   schedule:
     # UTC. Adjust as you wish. Runs daily at 02:15 AEST ≈ 16:15 UTC.
-    - cron:  '15 16 * * *'
+    - cron:  '0 3 * * *'
   workflow_dispatch:   # allows manual run
 
 env:
-  WORK_LOGIN: "rodo_codify"   # work account handle
-  WORK_REPO: "codifyptyltd/codify-systems"   # <─ full path to work repo
+  WORK_LOGIN: "rodo_codify"
   AUTHOR_NAME: "Rodo"
-  AUTHOR_EMAIL: "rodonguyendd@gmail.com"      # <─ email listed on your personal profile
+  AUTHOR_EMAIL: "rodonguyendd@gmail.com"
 
 jobs:
   mirror:

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "Starting mirror script..."
+
+# Required environment variables
 WORK_PAT="${WORK_PAT:?}"
 WORK_LOGIN="${WORK_LOGIN:?}"
 AUTHOR_NAME="rodo"
@@ -8,13 +11,17 @@ AUTHOR_EMAIL="rodonguyendd@gmail.com"
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-main}"
 STATE=.mirror_state.json
 
+echo "Configuring git user..."
 git config user.name  "$AUTHOR_NAME"
 git config user.email "$AUTHOR_EMAIL"
 
-# 1. Last total we recorded
+# 1. Get last recorded total from state file
+echo "Reading previous state..."
 LAST_TOTAL=$(jq -r '.total // 0' "$STATE" 2>/dev/null || echo 0)
+echo "Last recorded total: $LAST_TOTAL"
 
-# 2. Ask GitHub how many commits the work user has made since last run
+# 2. Fetch current commit count from GitHub API
+echo "Fetching commit count from GitHub..."
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 SINCE=$(jq -r '.timestamp' "$STATE" 2>/dev/null || echo "1970-01-01T00:00:00Z")
 
@@ -26,24 +33,32 @@ read -r TOTAL <<<"$(curl -s -H "Authorization: Bearer $WORK_PAT" \
 EOF
 )"
 
-# Ensure TOTAL is a valid integer
+# Validate API response
 if ! [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
-  echo "Failed to fetch total commit contributions from GitHub API."
+  echo "Error: Failed to fetch total commit contributions from GitHub API."
   exit 1
 fi
 
-echo "Commit count: $TOTAL"
+echo "Current commit count: $TOTAL"
 
+# Calculate difference and check if there are new commits
 DELTA=$(( TOTAL - LAST_TOTAL ))
-[[ $DELTA -le 0 ]] && { echo "Nothing new."; exit 0; }
+if [[ $DELTA -le 0 ]]; then 
+  echo "No new commits to mirror."
+  exit 0
+fi
 
-# 3. Forge the same number of empty commits
+# 3. Create mirror commits
+echo "Creating $DELTA mirror commits..."
 for ((i=0;i<DELTA;i++)); do
   git commit --allow-empty -m "work-mirror bump"
 done
 
-# 4. Update state and push
+# 4. Update state file and push changes
+echo "Updating state file and pushing changes..."
 jq -n --arg ts "$NOW" --argjson tot "$TOTAL" '{timestamp:$ts,total:$tot}' > "$STATE"
 git add "$STATE"
 git commit -m "chore: mirror state"
 git push origin HEAD:"$DEFAULT_BRANCH" --force-with-lease
+
+echo "Mirror script completed successfully."
