@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 echo "Starting mirror script..."
 
 # Required environment variables
@@ -9,7 +8,10 @@ WORK_LOGIN="${WORK_LOGIN:?}"
 AUTHOR_NAME="rodo"
 AUTHOR_EMAIL="rodonguyendd@gmail.com"
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-main}"
-STATE=mirror_state.json
+STATE=.github/scripts/mirror_state.json
+
+# Ensure state directory exists
+mkdir -p "$(dirname "$STATE")"
 
 echo "Configuring git user..."
 git config user.name  "$AUTHOR_NAME"
