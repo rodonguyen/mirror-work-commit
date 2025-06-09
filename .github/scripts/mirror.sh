@@ -37,14 +37,22 @@ cat "$STATE"
 echo "Fetching commit count from GitHub..."
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 SINCE=$(jq -r '.timestamp' "$STATE" 2>/dev/null || echo "1970-01-01T00:00:00Z")
+echo "Fetching commits from $SINCE to $NOW"
 
-read -r TOTAL <<<"$(curl -s -H "Authorization: Bearer $WORK_PAT" \
+# Make API request and capture full response
+API_RESPONSE=$(curl -s -H "Authorization: Bearer $WORK_PAT" \
   -H "Content-Type: application/json" \
-  -d @- https://api.github.com/graphql <<EOF | jq -r '.data.user.contributionsCollection.totalCommitContributions // 0'
+  -d @- https://api.github.com/graphql <<EOF
 { "query": "query(\$login:String!,\$from:DateTime!,\$to:DateTime!){ user(login:\$login){ contributionsCollection(from:\$from,to:\$to){ totalCommitContributions }}}",
   "variables": { "login": "$WORK_LOGIN", "from": "$SINCE", "to": "$NOW" } }
 EOF
-)"
+)
+
+echo "Raw API Response:"
+echo "$API_RESPONSE"
+
+# Extract total from response
+read -r TOTAL <<<"$(echo "$API_RESPONSE" | jq -r '.data.user.contributionsCollection.totalCommitContributions // 0')"
 
 # Validate API response
 if ! [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
