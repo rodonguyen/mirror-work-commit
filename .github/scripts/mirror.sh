@@ -5,6 +5,7 @@ echo "Starting mirror script..."
 # Required environment variables
 WORK_PAT="${WORK_PAT:?}"
 WORK_LOGIN="${WORK_LOGIN:?}"
+PERSONAL_PAT="${PERSONAL_PAT:?}"
 AUTHOR_NAME="rodo"
 AUTHOR_EMAIL="rodonguyendd@gmail.com"
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-main}"
@@ -12,6 +13,10 @@ DEFAULT_BRANCH="${DEFAULT_BRANCH:-main}"
 echo "Configuring git user..."
 git config user.name  "$AUTHOR_NAME"
 git config user.email "$AUTHOR_EMAIL"
+
+# Configure git to use personal token for authentication
+echo "Configuring git authentication..."
+git remote set-url origin "https://${PERSONAL_PAT}@github.com/rodonguyen/mirror-work-commit.git"
 
 # 2. Fetch current commit count from GitHub API
 echo ""
