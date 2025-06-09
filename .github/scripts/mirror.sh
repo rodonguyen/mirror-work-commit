@@ -13,7 +13,6 @@ echo "Configuring git user..."
 git config user.name  "$AUTHOR_NAME"
 git config user.email "$AUTHOR_EMAIL"
 
-# Configure git to use personal token for authentication
 echo "Configuring git authentication..."
 git remote set-url origin "https://x-access-token:${PERSONAL_PAT}@github.com/rodonguyen/mirror-work-commit.git"
 
