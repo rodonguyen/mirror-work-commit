@@ -17,7 +17,7 @@ git config user.email "$AUTHOR_EMAIL"
 echo "Configuring git authentication..."
 git remote set-url origin "https://x-access-token:${PERSONAL_PAT}@github.com/rodonguyen/mirror-work-commit.git"
 
-# 2. Fetch current commit count from GitHub API
+# 1. Fetch current commit count from GitHub API
 echo ""
 echo "Fetching commit count from GitHub..."
 SINCE=$(date -u -d "24 hours ago" +"%Y-%m-%dT%H:%M:%SZ")
@@ -35,7 +35,7 @@ TOTAL=$(curl -s \
   "https://api.github.com/search/commits?q=$ENCODED&per_page=1" |
   jq '.total_count')
 
-echo "Commits in the last 24 h across **all** repos: $TOTAL"
+echo "Commits in the last 24 h across all repos: $TOTAL"
 
 # Validate API response
 if ! [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
@@ -43,20 +43,19 @@ if ! [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
-# 3. Create mirror commits
-echo "Creating $TOTAL mirror commits..."
-
-# Show current branch
+echo "Sanity check"
+echo "Current branch:"
 git branch
-
-# Show current commit
+echo "Current commit:"
 git log -1
 
-for ((i=0;i<2;i++)); do
-  git commit --allow-empty -m "mirror work commits $i"
+# 2. Create mirror commits
+echo "Creating $TOTAL mirror commits..."
+for ((i=0;i<TOTAL;i++)); do
+  git commit --allow-empty -m "< mirror work commits $i >"
 done
 
-# 4. Push changes
+# 3. Push changes
 echo "Pushing changes to main..."
 git push origin HEAD:main --force-with-lease || {
   echo "Failed to push changes"
