@@ -36,7 +36,8 @@ cat "$STATE"
 # 2. Fetch current commit count from GitHub API
 echo "Fetching commit count from GitHub..."
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-SINCE=$(jq -r '.timestamp' "$STATE" 2>/dev/null || echo "1970-01-01T00:00:00Z")
+# Set SINCE to 24 hours ago (using BSD date format for macOS)
+SINCE=$(date -u -v-24H +"%Y-%m-%dT%H:%M:%SZ")
 echo "Fetching commits from $SINCE to $NOW"
 
 # Make API request and capture full response
