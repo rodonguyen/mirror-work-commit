@@ -20,12 +20,16 @@ echo "Reading previous state..."
 if [[ ! -f "$STATE" ]]; then
   echo "No state file found, creating new one..."
   jq -n --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" --argjson tot 0 '{timestamp:$ts,total:$tot}' > "$STATE"
+  echo "Created state file with contents:"
+  cat "$STATE"
   git add "$STATE"
   git commit -m "chore: initialize state file" || true
 fi
 
 LAST_TOTAL=$(jq -r '.total // 0' "$STATE" 2>/dev/null || echo 0)
 echo "Last recorded total: $LAST_TOTAL"
+echo "Current state file contents:"
+cat "$STATE"
 
 # 2. Fetch current commit count from GitHub API
 echo "Fetching commit count from GitHub..."
@@ -68,8 +72,17 @@ if ! jq -n --arg ts "$NOW" --argjson tot "$TOTAL" '{timestamp:$ts,total:$tot}' >
   exit 1
 fi
 
+echo "Updated state file contents:"
+cat "$STATE"
+
 git add "$STATE"
 git commit -m "chore: mirror state"
-git push origin HEAD:"$DEFAULT_BRANCH" --force-with-lease
+echo "Pushing changes to $DEFAULT_BRANCH..."
+if git push origin HEAD:"$DEFAULT_BRANCH" --force-with-lease; then
+  echo "Successfully pushed changes"
+else
+  echo "Failed to push changes"
+  exit 1
+fi
 
 echo "Mirror script completed successfully."
