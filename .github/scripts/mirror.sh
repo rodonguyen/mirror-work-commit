@@ -9,7 +9,7 @@ WORK_LOGIN="${WORK_LOGIN:?}"
 AUTHOR_NAME="rodo"
 AUTHOR_EMAIL="rodonguyendd@gmail.com"
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-main}"
-STATE=.mirror_state.json
+STATE=mirror_state.json
 
 echo "Configuring git user..."
 git config user.name  "$AUTHOR_NAME"
@@ -17,6 +17,13 @@ git config user.email "$AUTHOR_EMAIL"
 
 # 1. Get last recorded total from state file
 echo "Reading previous state..."
+if [[ ! -f "$STATE" ]]; then
+  echo "No state file found, creating new one..."
+  jq -n --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" --argjson tot 0 '{timestamp:$ts,total:$tot}' > "$STATE"
+  git add "$STATE"
+  git commit -m "chore: initialize state file" || true
+fi
+
 LAST_TOTAL=$(jq -r '.total // 0' "$STATE" 2>/dev/null || echo 0)
 echo "Last recorded total: $LAST_TOTAL"
 
@@ -56,7 +63,11 @@ done
 
 # 4. Update state file and push changes
 echo "Updating state file and pushing changes..."
-jq -n --arg ts "$NOW" --argjson tot "$TOTAL" '{timestamp:$ts,total:$tot}' > "$STATE"
+if ! jq -n --arg ts "$NOW" --argjson tot "$TOTAL" '{timestamp:$ts,total:$tot}' > "$STATE"; then
+  echo "Error: Failed to update state file"
+  exit 1
+fi
+
 git add "$STATE"
 git commit -m "chore: mirror state"
 git push origin HEAD:"$DEFAULT_BRANCH" --force-with-lease
