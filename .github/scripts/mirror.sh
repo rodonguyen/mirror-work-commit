@@ -46,18 +46,22 @@ echo "Current commit count: $TOTAL"
 
 # 3. Create mirror commits
 echo "Creating $TOTAL mirror commits..."
+
+# Show current branch
+git branch
+
+# Show current commit
+git log -1
+
 for ((i=0;i<2;i++)); do
   git commit --allow-empty -m "work-mirror bump"
 done
 
-
-git commit -m "chore: mirror state"
+# 4. Push changes
 echo "Pushing changes to $DEFAULT_BRANCH..."
-if git push origin HEAD:"$DEFAULT_BRANCH" --force-with-lease; then
-  echo "Successfully pushed changes"
-else
+git push origin HEAD:"$DEFAULT_BRANCH" --force-with-lease || {
   echo "Failed to push changes"
   exit 1
-fi
+}
 
 echo "Mirror script completed successfully."
