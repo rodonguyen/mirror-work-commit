@@ -4,16 +4,14 @@ This repo automates mirroring your private-work commits onto an empty-commit str
 
 >⚠️ Use at your own risk.  Forging contribution activity breaches GitHub's Acceptable-Use Policy and could violate employer policy.
 
-⸻
 
 How It Works
 1.	A scheduled GitHub Action counts the commits you made from your work account in the last 24 h (across all repos you can read) using the Search Commits API.
 2.	It generates the same number of --allow-empty commits in this repo.
 3.	Those commits use the email you configured, so they register on your personal graph after GitHub's normal propagation delay.
 
-⸻
 
-## 1. Quick-Start
+# Quick-Start
 
 #### 1  Fork / clone this repo
 ```
@@ -61,22 +59,20 @@ File Layout
 │   ├── workflows/
 │   │   └── mirror.yml        # the Action definition
 │   └── scripts/
-│       └── mirror.sh         # the bash logic
+│       └── mirror.sh         # main logic script
 └── README.md
 ```
 You generally edit only mirror.yml (schedule / env vars) and mirror.sh (if you want extra logic).
 
-⸻
-
-### Limitations
+# Others
+#### Limitations
 - The current GitHub API's endpoint being used only allows searching up to 1000 commits. This means you can't mirror >1000 commits a day (which is not likely to happen unless you are not human)
 
-### Security Notes  
+#### Security Notes  
 - Tokens live in GitHub Secrets, redacted in logs.  
 - Renew your token when it is about to expire to continure mirroring  
 - Use least privilege. The script only needs read on work repos and write on this repo.
 
 
-### License
-
+#### License
 MIT. Do whatever you like—at your own risk.
