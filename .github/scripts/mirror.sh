@@ -1,65 +1,66 @@
 #!/usr/bin/env bash
 set -euo pipefail
-echo "Starting mirror script..."
+echo "Starting mirror script…"
 
-# Required environment variables
-WORK_PAT="${WORK_PAT:?}"
-WORK_LOGIN="${WORK_LOGIN:?}"
-PERSONAL_PAT="${PERSONAL_PAT:?}"
+# ─── Required env vars ──────────────────────────────────────────────────────────
+WORK_PAT="${WORK_PAT:?}"        
+WORK_LOGIN="${WORK_LOGIN:?}"     
+PERSONAL_PAT="${PERSONAL_PAT:?}"  
+
 AUTHOR_NAME="rodo"
 AUTHOR_EMAIL="rodonguyendd@gmail.com"
 
-echo "Configuring git user..."
+# ─── Git setup ──────────────────────────────────────────────────────────────────
 git config user.name  "$AUTHOR_NAME"
 git config user.email "$AUTHOR_EMAIL"
+git remote set-url origin \
+  "https://x-access-token:${PERSONAL_PAT}@github.com/rodonguyen/mirror-work-commit.git"
 
-echo "Configuring git authentication..."
-git remote set-url origin "https://x-access-token:${PERSONAL_PAT}@github.com/rodonguyen/mirror-work-commit.git"
-
-# --------------------------------------------
-# 1. Fetch current commit count from GitHub API
-echo "Fetching commit count from GitHub..."
+# ─── Time window (last 24 h) ────────────────────────────────────────────────────
 SINCE=$(date -u -d "24 hours ago" +"%Y-%m-%dT%H:%M:%SZ")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-echo "Fetching commits from $SINCE to $NOW"
+echo "Counting contributions from $SINCE to $NOW"
 
-Q="author:$WORK_LOGIN committer-date:$SINCE..$NOW"
-ENCODED=$(jq -rn --arg q "$Q" '$q|@uri')
+# Helper: search() → prints total_count
+search () {
+  local QUERY="$1"
+  local ENCODED
+  ENCODED=$(jq -rn --arg q "$QUERY" '$q|@uri')
 
-TOTAL=$(curl -s \
-  -H "Authorization: Bearer $WORK_PAT" \
-  -H "Accept: application/vnd.github.cloak-preview+json" \
-  "https://api.github.com/search/commits?q=$ENCODED&per_page=1" |
-  jq '.total_count')
-
-echo "Commits in the last 24 h across all repos: $TOTAL"
-
-# 1.1. Validate API response
-if ! [[ "$TOTAL" =~ ^[0-9]+$ ]]; then
-  echo "Error: Failed to fetch total commit contributions from GitHub API."
-  exit 1
-fi
-
-# 1.2. Sanity check
-echo "Sanity check"
-echo "Current branch:"
-git branch
-echo "Current commit:"
-git log -1
-
-# --------------------------------------------
-# 2. Create mirror commits
-echo "Creating $TOTAL mirror commits..."
-for ((i=0;i<TOTAL;i++)); do
-  git commit --allow-empty -m "< mirror work commits $((i+1)) >"
-done
-
-# --------------------------------------------
-# 3. Push changes
-echo "Pushing changes to main..."
-git push origin HEAD:main --force-with-lease || {
-  echo "Failed to push changes"
-  exit 1
+  curl -s \
+    -H "Authorization: Bearer $WORK_PAT" \
+    -H "Accept: application/vnd.github.cloak-preview+json" \
+    "https://api.github.com/search/$2?q=$ENCODED&per_page=1" |
+    jq '.total_count'
 }
 
+# ─── 1. Commits (Search-Commits API) ────────────────────────────────────────────
+COMMITS=$(search "author:$WORK_LOGIN committer-date:$SINCE..$NOW" commits)
+echo "  commits:          $COMMITS"
+
+# ─── 2. PRs opened ──────────────────────────────────────────────────────────────
+PRS_OPENED=$(search "type:pr author:$WORK_LOGIN created:$SINCE..$NOW" issues)
+echo "  PRs opened:       $PRS_OPENED"
+
+# ─── 3. PRs reviewed ────────────────────────────────────────────────────────────
+PRS_REVIEWED=$(search "type:pr reviewed-by:$WORK_LOGIN created:$SINCE..$NOW" issues)
+echo "  PRs reviewed:     $PRS_REVIEWED"
+
+# ─── 4. Issues opened ───────────────────────────────────────────────────────────
+ISSUES_OPENED=$(search "type:issue author:$WORK_LOGIN created:$SINCE..$NOW" issues)
+echo "  issues opened:    $ISSUES_OPENED"
+
+# ─── 5. Grand total ─────────────────────────────────────────────────────────────
+GRAND_TOTAL=$(( COMMITS + PRS_OPENED + PRS_REVIEWED + ISSUES_OPENED ))
+echo "Grand total contributions: $GRAND_TOTAL"
+
+[[ $GRAND_TOTAL -eq 0 ]] && { echo "Nothing to mirror."; exit 0; }
+
+# ─── 6. Forge mirror commits ───────────────────────────────────────────────────
+for ((i=0;i<GRAND_TOTAL;i++)); do
+  git commit --allow-empty -m "< mirror work contribution $((i+1)) >"
+done
+
+# ─── 7. Push ────────────────────────────────────────────────────────────────────
+git push origin HEAD:main --force-with-lease
 echo "Mirror script completed successfully."
