@@ -4,8 +4,8 @@ echo "Starting mirror script…"
 
 # ─── Required env vars ──────────────────────────────────────────────────────────
 WORK_PAT="${WORK_PAT:?}"        
-WORK_LOGIN="${WORK_LOGIN:?}"     
 PERSONAL_PAT="${PERSONAL_PAT:?}"  
+WORK_LOGIN="rodo_codify" #"${WORK_LOGIN:?}"     
 
 AUTHOR_NAME="rodo"
 AUTHOR_EMAIL="rodonguyendd@gmail.com"
@@ -17,7 +17,7 @@ git remote set-url origin \
   "https://x-access-token:${PERSONAL_PAT}@github.com/rodonguyen/mirror-work-commit.git"
 
 # ─── Time window (last 24 h) ────────────────────────────────────────────────────
-SINCE=$(date -u -d "48 hours ago" +"%Y-%m-%dT%H:%M:%SZ")
+SINCE=$(date -u -d "24 hours ago" +"%Y-%m-%dT%H:%M:%SZ")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 echo "Counting contributions from $SINCE to $NOW"
 

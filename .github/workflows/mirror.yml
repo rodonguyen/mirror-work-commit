@@ -6,11 +6,6 @@ on:
     - cron:  '0 7 * * *'
   workflow_dispatch:   # allows manual run
 
-env:
-  WORK_LOGIN: "rodo_codify"
-  AUTHOR_NAME: "Rodo"
-  AUTHOR_EMAIL: "rodonguyendd@gmail.com"
-
 jobs:
   mirror:
     permissions:
