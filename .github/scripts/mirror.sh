@@ -17,7 +17,7 @@ git remote set-url origin \
   "https://x-access-token:${PERSONAL_PAT}@github.com/rodonguyen/mirror-work-commit.git"
 
 # ─── Time window (last 24 h) ────────────────────────────────────────────────────
-SINCE=$(date -u -d "24 hours ago" +"%Y-%m-%dT%H:%M:%SZ")
+SINCE=$(date -u -d "48 hours ago" +"%Y-%m-%dT%H:%M:%SZ")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 echo "Counting contributions from $SINCE to $NOW"
 
@@ -43,7 +43,8 @@ PRS_OPENED=$(search "type:pr author:$WORK_LOGIN created:$SINCE..$NOW" issues)
 echo "  PRs opened:       $PRS_OPENED"
 
 # ─── 3. PRs reviewed ────────────────────────────────────────────────────────────
-PRS_REVIEWED=$(search "type:pr reviewed-by:$WORK_LOGIN created:$SINCE..$NOW" issues)
+PRS_REVIEWED=$(search \
+  "type:pr reviewed-by:$WORK_LOGIN updated:$SINCE..$NOW" issues)
 echo "  PRs reviewed:     $PRS_REVIEWED"
 
 # ─── 4. Issues opened ───────────────────────────────────────────────────────────
