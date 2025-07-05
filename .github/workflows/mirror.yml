@@ -3,7 +3,7 @@ name: mirror‐work‐commits
 on:
   schedule:
     # UTC. Adjust as you wish. Runs daily at 02:15 AEST ≈ 16:15 UTC.
-    - cron:  '0 7 * * *'
+    # - cron:  '* * * * *'
   workflow_dispatch:   # allows manual run
 
 jobs:
